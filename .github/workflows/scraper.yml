@@ -1,0 +1,64 @@
+name: Dubizzle Toyota Scraper Bot
+
+on:
+  # Cron-job.org هو المجدول الوحيد لتجنب تشغيل المهمة مرتين.
+  workflow_dispatch:
+  repository_dispatch:
+    types: [cron_trigger]
+
+concurrency:
+  group: dubizzle-toyota-scraper
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Scraper Script
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          SCRAPER_API_KEY: ${{ secrets.SCRAPER_API_KEY }}
+          SCRAPER_API_KEY2: ${{ secrets.SCRAPER_API_KEY2 }}
+          SCRAPER_API_KEY3: ${{ secrets.SCRAPER_API_KEY3 }}
+          SCRAPER_API_KEY4: ${{ secrets.SCRAPER_API_KEY4 }}
+          SCRAPINGANT_API_KEY: ${{ secrets.SCRAPINGANT_API_KEY }}
+          SCRAPINGANT_API_KEY2: ${{ secrets.SCRAPINGANT_API_KEY2 }}
+          SCRAPINGANT_API_KEY3: ${{ secrets.SCRAPINGANT_API_KEY3 }}
+          SCRAPINGANT_API_KEY4: ${{ secrets.SCRAPINGANT_API_KEY4 }}
+          SCRAPINGANT_API_KEY5: ${{ secrets.SCRAPINGANT_API_KEY5 }}
+          SCRAPINGANT_API_KEY6: ${{ secrets.SCRAPINGANT_API_KEY6 }}
+          SCRAPINGANT_API_KEY7: ${{ secrets.SCRAPINGANT_API_KEY7 }}
+          SCRAPINGANT_API_KEY8: ${{ secrets.SCRAPINGANT_API_KEY8 }}
+        run: python main.py
+
+      - name: Persist sent ads database
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sent_ads.db
+          if git diff --cached --quiet; then
+            echo "No database changes to commit."
+          else
+            git commit -m "chore: update sent ads database [skip ci]"
+            git push
+          fi
